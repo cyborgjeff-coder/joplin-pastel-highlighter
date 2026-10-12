@@ -1,0 +1,11 @@
+{
+  "manifest_version": 1,
+  "id": "fr.quena.pastel-highlighter-test03",
+  "app_min_version": "3.7",
+  "version": "0.3.0",
+  "name": "Pastel Highlighter Test 0.3",
+  "description": "Prototype experimental : surlignage vert pastel dans l'editeur visuel.",
+  "author": "Quena",
+  "homepage_url": "https://joplinapp.org/",
+  "keywords": ["highlight", "pastel", "rich-text"]
+}

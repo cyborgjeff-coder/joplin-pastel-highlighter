@@ -26,9 +26,18 @@ async function clearHighlight() {
 
 joplin.plugins.register({
   onStart: async () => {
-    console.info('[Pastel Highlighter 0.4.3] démarrage');
+    console.info('[Pastel Highlighter 0.4.4] démarrage');
+    let currentColor = '#C9EED2';
     // Un dialogue unique : Joplin ne permet pas de recréer le même identifiant à chaque clic.
     const dialog = await joplin.views.dialogs.create('quenaPastelColorDialog');
+    await joplin.commands.register({
+      name: 'quenaPastelApplyCurrent', label: 'Surligner avec la couleur actuelle',
+      iconName: 'fas fa-highlighter',
+      execute: async () => { try { await applyHighlight(currentColor); } catch (e) { console.error(e); } },
+    });
+    await joplin.views.toolbarButtons.create(
+      'quenaPastelApplyCurrentButton', 'quenaPastelApplyCurrent', ToolbarButtonLocation.EditorToolbar
+    );
     await joplin.commands.register({
       name: 'quenaPastelOpenPalette',
       label: 'Surlignage pastel : choisir une couleur',
@@ -61,7 +70,7 @@ joplin.plugins.register({
           if (choice === 'erase') await clearHighlight();
           else {
             const color = pastelColors.find(c => c.key === choice);
-            if (color) await applyHighlight(color.color);
+            if (color) { currentColor = color.color; await applyHighlight(color.color); }
           }
         } catch (error) { console.error('[Pastel Highlighter] palette', error); }
       },
@@ -69,19 +78,21 @@ joplin.plugins.register({
     await joplin.views.toolbarButtons.create(
       'quenaPastelPaletteButton', 'quenaPastelOpenPalette', ToolbarButtonLocation.EditorToolbar
     );
+    const menuCommands: string[] = [];
     for (const c of pastelColors) {
       const name = `quenaPastelApply${c.key}`;
       await joplin.commands.register({
         name, label: c.label, iconName: 'fas fa-highlighter',
         execute: async () => { try { await applyHighlight(c.color); } catch (e) { console.error(e); } },
       });
-      await joplin.views.menuItems.create(`quenaPastelMenu${c.key}`, name, MenuItemLocation.Tools);
+      menuCommands.push(name);
     }
     await joplin.commands.register({
       name: 'quenaPastelErase', label: 'Supprimer le surlignage', iconName: 'fas fa-eraser',
       execute: async () => { try { await clearHighlight(); } catch (e) { console.error(e); } },
     });
-    await joplin.views.menuItems.create('quenaPastelEraseMenu', 'quenaPastelErase', MenuItemLocation.Tools);
-    console.info('[Pastel Highlighter 0.4.3] bouton et commandes enregistrés');
+    menuCommands.push('quenaPastelErase');
+    await joplin.views.menus.create('quenaPastelToolsSubmenu', 'Surligner', menuCommands, MenuItemLocation.Tools);
+    console.info('[Pastel Highlighter 0.4.4] deux boutons et sous-menu enregistrés');
   },
 });

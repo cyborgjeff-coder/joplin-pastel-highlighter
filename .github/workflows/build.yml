@@ -31,9 +31,9 @@ jobs:
           code = p.read_text()
           old = "import joplin from 'api';\nimport { ToolbarButtonLocation, MenuItemLocation } from 'api/types';"
           assert old in code, 'Imports inattendus : ne pas compiler un code non verifie'
-          code = code.replace(old, "declare const joplin: any;\nconst ToolbarButtonLocation = { EditorToolbar: 'editorToolbar' };\nconst MenuItemLocation = { Tools: 'tools' };")
+          code = code.replace(old, "const ToolbarButtonLocation = { EditorToolbar: 'editorToolbar' };\nconst MenuItemLocation = { Tools: 'tools' };")
           p.write_text(code)
-          print('API Joplin globale : imports supprimes et emplacements definis')
+          print('Imports supprimes ; declaration joplin fournie par le modele ; emplacements definis')
           PY
       - name: Installer et compiler
         working-directory: joplin-plugin

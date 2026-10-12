@@ -22,9 +22,9 @@ jobs:
       - name: Construire le fichier JPL
         run: |
           cd dist
-          tar -cf ../pastel-highlighter-test03.jpl index.js manifest.json
+          zip -q ../pastel-highlighter-test03.jpl index.js manifest.json
           cd ..
-          tar -tf pastel-highlighter-test03.jpl
+          unzip -t pastel-highlighter-test03.jpl
       - name: Telecharger le JPL
         uses: actions/upload-artifact@v4
         with:

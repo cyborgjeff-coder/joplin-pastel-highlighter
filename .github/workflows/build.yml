@@ -7,33 +7,50 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Récupérer ce projet
+      - name: Recuperer le projet
         uses: actions/checkout@v4
         with:
           path: personnalisation
-      - name: Récupérer le modèle de plugin Joplin
+      - name: Recuperer le modele Joplin
         uses: actions/checkout@v4
         with:
           repository: laurent22/joplin-plugin
           path: joplin-plugin
-      - name: Préparer Node.js
+      - name: Preparer Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Copier le code et le manifeste
+      - name: Copier et adapter le code
+        shell: bash
         run: |
           cp personnalisation/src/index.ts joplin-plugin/src/index.ts
           cp personnalisation/src/manifest.json joplin-plugin/src/manifest.json
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('joplin-plugin/src/index.ts')
+          code = p.read_text()
+          old = "import joplin from 'api';\nimport { ToolbarButtonLocation, MenuItemLocation } from 'api/types';"
+          assert old in code, 'Imports inattendus : ne pas compiler un code non verifie'
+          code = code.replace(old, "declare const joplin: any;\nconst ToolbarButtonLocation = { EditorToolbar: 'editorToolbar' };\nconst MenuItemLocation = { Tools: 'tools' };")
+          p.write_text(code)
+          print('API Joplin globale : imports supprimes et emplacements definis')
+          PY
       - name: Installer et compiler
         working-directory: joplin-plugin
         run: |
           npm install
           npm run dist
-      - name: Vérifier la présence du JPL
+      - name: Verifier le paquet produit
+        shell: bash
         run: |
           find joplin-plugin -name '*.jpl' -type f -print
           test -n "$(find joplin-plugin -name '*.jpl' -type f -print -quit)"
-      - name: Mettre le plugin à disposition
+          test -f joplin-plugin/dist/index.js
+          if grep -Eq 'require\(["\x27]api(["\x27]|/)' joplin-plugin/dist/index.js; then
+            echo 'ERREUR: dependance api non resolue dans index.js'
+            exit 1
+          fi
+      - name: Mettre le JPL a disposition
         uses: actions/upload-artifact@v4
         with:
           name: pastel-highlighter-jpl

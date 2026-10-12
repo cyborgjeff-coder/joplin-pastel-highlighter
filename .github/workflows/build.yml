@@ -45,12 +45,14 @@ jobs:
         run: |
           set -euo pipefail
           test -s joplin-plugin/dist/index.js
-          test -s joplin-plugin/dist/manifest.json || cp joplin-plugin/src/manifest.json joplin-plugin/dist/manifest.json
+          # Le modele peut generer son propre manifeste sans identifiant.
+          # Toujours remplacer par le manifeste de notre plugin.
+          cp personnalisation/src/manifest.json joplin-plugin/dist/manifest.json
           python3 - <<'PYVERIFY'
           import json, pathlib
           d = pathlib.Path('joplin-plugin/dist')
           m = json.loads((d/'manifest.json').read_text())
-          assert m['id'] == 'fr.quena.pastel-highlighter-test03', m['id']
+          assert m.get('id') == 'fr.quena.pastel-highlighter-test03', m
           js = (d/'index.js').read_text()
           assert 'require("api")' not in js and "require('api')" not in js, 'Import api encore present'
           print('Fichiers compiles verifies, identifiant:', m['id'])

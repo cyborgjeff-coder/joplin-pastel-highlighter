@@ -26,31 +26,31 @@ async function clearHighlight() {
 
 joplin.plugins.register({
   onStart: async () => {
-    console.info('[Pastel Highlighter 0.4] démarrage');
-    const dialog = await joplin.views.dialogs.create('quenaPastelColorDialog');
-    const rows = pastelColors.map((c, i) =>
-      `<label style="display:flex;align-items:center;gap:10px;margin:9px 0;cursor:pointer">` +
-      `<input type="radio" name="pastelColor" value="${c.key}" ${i === 1 ? 'checked' : ''}>` +
-      `<span style="width:28px;height:20px;border:1px solid #999;border-radius:4px;background:${c.color}"></span>` +
-      `${c.label}</label>`
-    ).join('');
-    await joplin.views.dialogs.setHtml(dialog,
-      `<div style="font:14px sans-serif;padding:12px 20px;min-width:230px">` +
-      `<h3 style="margin:0 0 12px">Surlignage pastel</h3>` +
-      `<form name="pastelPicker">${rows}` +
-      `<hr><label style="display:flex;gap:10px;align-items:center">` +
-      `<input type="radio" name="pastelColor" value="erase">` +
-      `🧽 Supprimer le surlignage</label></form></div>`
-    );
-    await joplin.views.dialogs.setButtons(dialog, [
-      { id: 'ok', title: 'Appliquer' }, { id: 'cancel', title: 'Annuler' },
-    ]);
+    console.info('[Pastel Highlighter 0.4.1] démarrage');
     await joplin.commands.register({
       name: 'quenaPastelOpenPalette',
       label: 'Surlignage pastel : choisir une couleur',
       iconName: 'fas fa-highlighter',
       execute: async () => {
         try {
+        const dialog = await joplin.views.dialogs.create('quenaPastelColorDialog');
+        const rows = pastelColors.map((c, i) =>
+          `<label style="display:flex;align-items:center;gap:10px;margin:9px 0;cursor:pointer">` +
+          `<input type="radio" name="pastelColor" value="${c.key}" ${i === 1 ? 'checked' : ''}>` +
+          `<span style="width:28px;height:20px;border:1px solid #999;border-radius:4px;background:${c.color}"></span>` +
+          `${c.label}</label>`
+        ).join('');
+        await joplin.views.dialogs.setHtml(dialog,
+          `<div style="font:14px sans-serif;padding:12px 20px;min-width:230px">` +
+          `<h3 style="margin:0 0 12px">Surlignage pastel</h3>` +
+          `<form name="pastelPicker">${rows}` +
+          `<hr><label style="display:flex;gap:10px;align-items:center">` +
+          `<input type="radio" name="pastelColor" value="erase">` +
+          `🧽 Supprimer le surlignage</label></form></div>`
+        );
+        await joplin.views.dialogs.setButtons(dialog, [
+          { id: 'ok', title: 'Appliquer' }, { id: 'cancel', title: 'Annuler' },
+        ]);
           const result = await joplin.views.dialogs.open(dialog);
           if (result.id !== 'ok') return;
           const choice = result.formData?.pastelPicker?.pastelColor;
@@ -65,22 +65,19 @@ joplin.plugins.register({
     await joplin.views.toolbarButtons.create(
       'quenaPastelPaletteButton', 'quenaPastelOpenPalette', ToolbarButtonLocation.EditorToolbar
     );
-    const submenu: any[] = [];
     for (const c of pastelColors) {
       const name = `quenaPastelApply${c.key}`;
       await joplin.commands.register({
         name, label: c.label, iconName: 'fas fa-highlighter',
         execute: async () => { try { await applyHighlight(c.color); } catch (e) { console.error(e); } },
       });
-      submenu.push({ commandName: name, label: c.label });
+      await joplin.views.menuItems.create(`quenaPastelMenu${c.key}`, name, MenuItemLocation.Tools);
     }
     await joplin.commands.register({
       name: 'quenaPastelErase', label: 'Supprimer le surlignage', iconName: 'fas fa-eraser',
       execute: async () => { try { await clearHighlight(); } catch (e) { console.error(e); } },
     });
-    submenu.push({ type: 'separator' });
-    submenu.push({ commandName: 'quenaPastelErase', label: 'Supprimer le surlignage' });
-    await joplin.views.menus.create('quenaPastelColorsMenu', 'Surlignage pastel', submenu, MenuItemLocation.Tools);
-    console.info('[Pastel Highlighter 0.4] palette et menu enregistrés');
+    await joplin.views.menuItems.create('quenaPastelEraseMenu', 'quenaPastelErase', MenuItemLocation.Tools);
+    console.info('[Pastel Highlighter 0.4.1] bouton et commandes enregistrés');
   },
 });

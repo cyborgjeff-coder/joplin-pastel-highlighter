@@ -26,7 +26,7 @@ async function clearHighlight() {
 
 joplin.plugins.register({
   onStart: async () => {
-    console.info('[Pastel Highlighter 0.4.1] démarrage');
+    console.info('[Pastel Highlighter 0.4.2] démarrage');
     await joplin.commands.register({
       name: 'quenaPastelOpenPalette',
       label: 'Surlignage pastel : choisir une couleur',
@@ -54,6 +54,9 @@ joplin.plugins.register({
           const result = await joplin.views.dialogs.open(dialog);
           if (result.id !== 'ok') return;
           const choice = result.formData?.pastelPicker?.pastelColor;
+          // Le dialogue ferme, rendre le focus a l'editeur avant d'appliquer.
+          // Attention : TinyMCE peut ne pas conserver la selection initiale.
+          await joplin.commands.execute('editor.focus');
           if (choice === 'erase') await clearHighlight();
           else {
             const color = pastelColors.find(c => c.key === choice);
@@ -78,6 +81,6 @@ joplin.plugins.register({
       execute: async () => { try { await clearHighlight(); } catch (e) { console.error(e); } },
     });
     await joplin.views.menuItems.create('quenaPastelEraseMenu', 'quenaPastelErase', MenuItemLocation.Tools);
-    console.info('[Pastel Highlighter 0.4.1] bouton et commandes enregistrés');
+    console.info('[Pastel Highlighter 0.4.2] bouton et commandes enregistrés');
   },
 });

@@ -26,14 +26,15 @@ async function clearHighlight() {
 
 joplin.plugins.register({
   onStart: async () => {
-    console.info('[Pastel Highlighter 0.4.2] démarrage');
+    console.info('[Pastel Highlighter 0.4.3] démarrage');
+    // Un dialogue unique : Joplin ne permet pas de recréer le même identifiant à chaque clic.
+    const dialog = await joplin.views.dialogs.create('quenaPastelColorDialog');
     await joplin.commands.register({
       name: 'quenaPastelOpenPalette',
       label: 'Surlignage pastel : choisir une couleur',
       iconName: 'fas fa-highlighter',
       execute: async () => {
         try {
-        const dialog = await joplin.views.dialogs.create('quenaPastelColorDialog');
         const rows = pastelColors.map((c, i) =>
           `<label style="display:flex;align-items:center;gap:10px;margin:9px 0;cursor:pointer">` +
           `<input type="radio" name="pastelColor" value="${c.key}" ${i === 1 ? 'checked' : ''}>` +
@@ -81,6 +82,6 @@ joplin.plugins.register({
       execute: async () => { try { await clearHighlight(); } catch (e) { console.error(e); } },
     });
     await joplin.views.menuItems.create('quenaPastelEraseMenu', 'quenaPastelErase', MenuItemLocation.Tools);
-    console.info('[Pastel Highlighter 0.4.2] bouton et commandes enregistrés');
+    console.info('[Pastel Highlighter 0.4.3] bouton et commandes enregistrés');
   },
 });

@@ -2,32 +2,40 @@ name: Compiler le plugin Joplin
 on:
   workflow_dispatch:
   push:
-    branches: [main]
-
+    branches: [main, master]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Recuperer le depot
+      - name: Récupérer ce projet
         uses: actions/checkout@v4
-      - name: Preparer Node.js
+        with:
+          path: personnalisation
+      - name: Récupérer le modèle de plugin Joplin
+        uses: actions/checkout@v4
+        with:
+          repository: laurent22/joplin-plugin
+          path: joplin-plugin
+      - name: Préparer Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - name: Compiler le plugin avec esbuild
+          node-version: '20'
+      - name: Copier le code et le manifeste
         run: |
-          mkdir -p dist
-          npx --yes --package=esbuild@0.25.12 esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --external:api --external:api/types --outfile=dist/index.js
-          cp src/manifest.json dist/manifest.json
-      - name: Construire le fichier JPL
+          cp personnalisation/src/index.ts joplin-plugin/src/index.ts
+          cp personnalisation/src/manifest.json joplin-plugin/src/manifest.json
+      - name: Installer et compiler
+        working-directory: joplin-plugin
         run: |
-          cd dist
-          zip -q ../pastel-highlighter-test03.jpl index.js manifest.json
-          cd ..
-          unzip -t pastel-highlighter-test03.jpl
-      - name: Telecharger le JPL
+          npm install
+          npm run dist
+      - name: Vérifier la présence du JPL
+        run: |
+          find joplin-plugin -name '*.jpl' -type f -print
+          test -n "$(find joplin-plugin -name '*.jpl' -type f -print -quit)"
+      - name: Mettre le plugin à disposition
         uses: actions/upload-artifact@v4
         with:
           name: pastel-highlighter-jpl
-          path: pastel-highlighter-test03.jpl
+          path: joplin-plugin/**/*.jpl
           if-no-files-found: error

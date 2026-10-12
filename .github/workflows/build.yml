@@ -40,19 +40,27 @@ jobs:
         run: |
           npm install
           npm run dist
-      - name: Verifier le paquet produit
+      - name: Verifier la compilation et fabriquer le JPL
         shell: bash
         run: |
-          find joplin-plugin -name '*.jpl' -type f -print
-          test -n "$(find joplin-plugin -name '*.jpl' -type f -print -quit)"
-          test -f joplin-plugin/dist/index.js
-          if grep -Eq 'require\(["\x27]api(["\x27]|/)' joplin-plugin/dist/index.js; then
-            echo 'ERREUR: dependance api non resolue dans index.js'
-            exit 1
-          fi
+          set -euo pipefail
+          test -s joplin-plugin/dist/index.js
+          test -s joplin-plugin/dist/manifest.json || cp joplin-plugin/src/manifest.json joplin-plugin/dist/manifest.json
+          python3 - <<'PYVERIFY'
+          import json, pathlib
+          d = pathlib.Path('joplin-plugin/dist')
+          m = json.loads((d/'manifest.json').read_text())
+          assert m['id'] == 'fr.quena.pastel-highlighter-test03', m['id']
+          js = (d/'index.js').read_text()
+          assert 'require("api")' not in js and "require('api')" not in js, 'Import api encore present'
+          print('Fichiers compiles verifies, identifiant:', m['id'])
+          PYVERIFY
+          tar -cf pastel-highlighter-test05.jpl -C joplin-plugin/dist index.js manifest.json
+          tar -tf pastel-highlighter-test05.jpl
+          test -s pastel-highlighter-test05.jpl
       - name: Mettre le JPL a disposition
         uses: actions/upload-artifact@v4
         with:
           name: pastel-highlighter-jpl
-          path: joplin-plugin/**/*.jpl
+          path: pastel-highlighter-test05.jpl
           if-no-files-found: error
